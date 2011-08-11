@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Cuicui</title>
+        <meta charset="UTF-8"/>
+        <link rel="stylesheet" type="text/css" media="screen" href="@{'/public/stylesheets/cuicui.css'}"/>
+        <link rel="stylesheet" media="screen, projection, tv, print" href="http://cuicui.zenexity.com/theme/cloudy/css/display.css?version=0.9.7fix1"/>
+        <link rel="apple-touch-icon" type="image/png" href="http://portal-cuicui.appspot.com/public/images/favicon_big.png">
+		<link rel="apple-touch-icon-precomposed" type="image/png" href="http://portal-cuicui.appspot.com/public/images/favicon_big.png">
+        <link rel="shortcut icon" type="image/ico" href="@{'/public/images/favicon.ico'}">
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+		<script type="text/javascript" src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.min.js"></script>
+		<script type="text/javascript" src="http://js.pusherapp.com/1.8/pusher.min.js"></script>
+		
+		<script type="text/javascript" src="/public/javascripts/cuicui.js"></script>
+		<script type="text/javascript" src="/public/javascripts/widget.js"></script>
+    </head>
+    <body>
+
+
+<script id="elementTemplate" type="text/x-jquery-tmpl">
+        <li class="hentry notice">
+         <div class="entry-title">
+          <span class="vcard author">
+           <a href="{{= authorUri}}" class="url" title="{{= authorDisplayname}} ({{= authorName}})">
+            <img src="{{= authorAvatar48}}" class="avatar photo" width="48" height="48" alt="{{= authorDisplayname}}"/>
+			<span class="nickname fn">{{= authorName}}</span>
+		   </a>
+          </span>
+          <p class="entry-content">{{html contentHtml}}</p>
+         </div>
+         <div class="entry-content">
+          <a rel="bookmark" class="timestamp" href="{{= id}}"}>
+           <abbr class="published" title="{{= published}}">il y a environ {{= deltaDate}}</abbr>
+          </a>
+         </div>
+        </li>
+</script>
+<header>
+	<div>Cuicui</div>
+	<div class="live-update">
+		Mis a jour (<span id="live-update-ago">loading</span>)
+	</div>
+</header>
+    <div id="content">
+
+     <div id="content_inner">
+      <div id="notices_primary">
+       <ol class="notices xoxo">
+		<!-- You found the hot spot! -->
+       </ol>
+      </div>
+     </div>
+    </div>
+    </body>
+</html>
