@@ -38,25 +38,36 @@ public class Cuicui extends Controller {
     public static void rssJsonp(String jsonp,String latest) throws SAXException, IOException, ParserConfigurationException {
     	Map<String,String> result = new HashMap<String, String>();
     	
+    	// Give the xml only if user doesnt have the lastest version
     	if ( latest != null && latest.equals(latest(true)) ) {
         	result.put("youHaveLatest","true");
     	} else {
-        	result.put("xml", getRss(true));
+        	result.put("xml", getRss(true,1));
         	result.put("youHaveLatest","false");
     	}
     	
     	renderText(jsonp+"("+new Gson().toJson(result)+");");
     }
     
-    private static String getRss(Boolean cache) {
-    	String xml = Cache.get("cuirss",String.class);
+    public static void rssPageJsonp(String jsonp,Integer page) throws SAXException, IOException, ParserConfigurationException {
+    	Map<String,String> result = new HashMap<String, String>();
+    	
+        result.put("xml", getRss(true,page));
+        result.put("youHaveLatest","false");
+    	
+    	renderText(jsonp+"("+new Gson().toJson(result)+");");
+    }
+    
+    private static String getRss(Boolean cache,Integer page) {
+    	if (page == null) page = 1;
+    	String xml = Cache.get("cuirss"+page,String.class);
     	if (cache == false || xml == null) {
-        	xml = WS.url("http://cuicui.zenexity.com/api/statuses/public_timeline.atom").authenticate(Play.configuration.getProperty("cuicui.username"),Play.configuration.getProperty("cuicui.password")).get().getString();
-        	Cache.set("cuirss", xml, "30s");
+        	xml = WS.url("http://cuicui.zenexity.com/api/statuses/public_timeline.atom").setParameter("page", page).authenticate(Play.configuration.getProperty("cuicui.username"),Play.configuration.getProperty("cuicui.password")).get().getString();
+        	Cache.set("cuirss"+page, xml, "30s");
     	}
     	return xml;
     }
-
+    
     public static void ping() throws SAXException, IOException, ParserConfigurationException {
     	Map<String,String> result = new HashMap<String, String>();
     	result.put("latest",latest(false));
@@ -67,7 +78,7 @@ public class Cuicui extends Controller {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		Document document;
 		
-		document = dbf.newDocumentBuilder().parse(new InputSource(new ByteArrayInputStream( getRss(cache).getBytes() )));
+		document = dbf.newDocumentBuilder().parse(new InputSource(new ByteArrayInputStream( getRss(cache,1).getBytes() )));
 		List<Node> tradeItemNodes = XPath.selectNodes("//entry", document);
 		return XPath.selectText("published", tradeItemNodes.get(0));
     }

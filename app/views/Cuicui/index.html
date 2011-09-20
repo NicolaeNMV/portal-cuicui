@@ -29,22 +29,23 @@
 		   </a>
           </span>
           <p class="entry-content">{{html contentHtml}}</p>
-         </div>
-         <div class="entry-content">
-          <a rel="bookmark" class="timestamp" href="{{= id}}"}>
-           <abbr class="published" title="{{= published}}">il y a environ {{= deltaDate}}</abbr>
-          </a>
+          
+          <div class="entry-content">
+           <a rel="bookmark" class="timestamp" href="{{= id}}"}>
+            il y a environ <abbr class="published" title="{{= published}}">{{= deltaDate}}</abbr>
+           </a>
+          </div>
          </div>
         </li>
 </script>
 <header>
-	<div>Cuicui</div>
+	<div><a href="http://cuicui.zenexity.com" id="cuicui_main_url" target="_blank">Cuicui</a></div>
 	<div class="live-update">
-		Mis a jour (<span id="live-update-ago">loading</span>)
+		Dernier pong reçu (<span id="live-update-ago">loading</span>)
 	</div>
 </header>
     <div id="content">
-
+	
      <div id="content_inner">
       <div id="notices_primary">
        <ol class="notices xoxo">
@@ -53,5 +54,12 @@
       </div>
      </div>
     </div>
+    
+	<audio style="display:none" id="audioOnNewCuicui" volume="0.8" preload="auto">
+	  <source src="/public/sounds/oo_sound.ogg" type="audio/ogg" />
+	  <source src="/public/sounds/oo_sound.mp3" type="audio/mp3" />
+	  Your browser does not support the audio element.
+	</audio>
+	<img src="/public/images/pacman_animation.gif" id="loading_pacman">
     </body>
 </html>

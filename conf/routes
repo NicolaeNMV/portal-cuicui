@@ -14,8 +14,10 @@ GET     /public/                                staticDir:public
 # Catch all
 *       /{controller}/{action}                  {controller}.{action}
 
+GET		/cuicui/cake/{jsonp}/page/{page}		Cuicui.rssPageJsonp
 GET		/cuicui/cake/{jsonp}/{latest}			Cuicui.rssJsonp
 GET		/cuicui/cake/{jsonp}					Cuicui.rssJsonp
 GET		/cuicui/								Cuicui.index
 GET		/cuicui/lastest							Cuicui.latest
 GET		/cuicui/ping							Cuicui.ping
+POST    /_ah/xmpp/message/chat/					Cuicui.receiveMessage

@@ -4,12 +4,13 @@ $(document).ready(function() {
 	cuicui.main.main();
 });
 
-cuicui.feed_date = null;
+cuicui.feed_date = null; // date when cuicui feed was last checked
 
 cuicui.main = (function(){
-	var limit = 6;
+	$(document).bind("cuiTick",function(){recalculatePostsSinceText()});
 	
 	var main = function() {
+		uiEnhancer(); // Open links in a new window, infinite scroll
 		loadCui();
 		
 		Pict.send('ready', {
@@ -28,9 +29,21 @@ cuicui.main = (function(){
 			if (data.youHaveLatest == "false")
 				cuicui.local.store(data.xml);
 			xml = cuicui.local.getXml();
-			xml.find("feed entry:lt("+limit+")").each(function(i,el) {
-				cuicui.main.parseEntry(el);
-			});
+			loadCuiXml(xml);
+			$(document).trigger("loadCui");
+		});
+	}
+	
+	var loadCuiXml = function(xml,cssSelectLimit) {
+		xml.find("feed entry").each(function(i,el) {
+			cuicui.main.parseEntry(el);
+		});		
+	}
+	
+	var loadCuiPage = function(page) {
+		cuicui.tools.getJSONP("/cuicui/cake/?/page/"+page,function(data){
+			var xml = $($.parseXML(data.xml));
+			loadCuiXml(xml);
 			$(document).trigger("loadCui");
 		});
 	}
@@ -50,16 +63,66 @@ cuicui.main = (function(){
         $( "#elementTemplate" ).tmpl( params ).appendTo( "ol.notices" );
 	}
 	
+	var uiLoader = (function() {
+		var show = function() {
+			$("#loading_pacman").show();
+		}
+		var hide = function() {
+			$("#loading_pacman").hide();
+		}
+		return {
+			show: show,
+			hide: hide
+		}
+	})();
+	
+	var uiEnhancer = function() {
+		var cuicuiIsLoading = false; // One loading at a time
+		var page = 1; // Current loaded cuis, used for infinite scrolling feature
+		// Link in a new window
+		$("ol.notices a").live("mousedown",function(){$(this).attr({target:"_blank"})});
+		// Infinite scroll
+		var content = $("#content");
+		content.scroll(function() {
+			if (cuicuiIsLoading == true) return;
+			var height =  content.height();
+			var tillTheEnd = content.prop("scrollHeight") - content.scrollTop() - height;
+			if (tillTheEnd < height) {				
+				console.log("Gogo",cuicuiIsLoading,page);
+				cuicuiIsLoading = true;
+				cuicui.main.loadCuiPage(++page);
+				uiLoader.show();
+			}
+		});
+		$(document).bind("loadCui",function(){
+			cuicuiIsLoading=false;
+			uiLoader.hide();
+			}
+		);
+		
+		//cuicui.local.lastView.get();
+	}
+	
+	// Update posts since time, once in a tick
+	var recalculatePostsSinceText = function() {
+		$(".timestamp abbr").each(function(){
+			var recalculatedElpased = cuicui.tools.parseISO8601Date($(this).prop("title"));
+			$(this).text( cuicui.tools.deltaDateText(recalculatedElpased) );
+		});
+	}
+	
 	return {
 		parseEntry: parseEntry,
 		loadCui: loadCui,
+		loadCuiXml: loadCuiXml,
+		loadCuiPage: loadCuiPage,
 		main: main
 	}
 })();
 
 // Local cache
 cuicui.local = (function(){
-	var key = "xxmlStr";
+	var key = "xmlStr";
 	var parsedXml = false;
 	
 	var get = function() {
@@ -73,6 +136,20 @@ cuicui.local = (function(){
 		return parsedXml;
 	}
 	
+	var lastView = function() {
+		var key = "lastView";
+		var mySet = function(data) {
+			return set(lastView,data);
+		}
+		var myGet = function() {
+			return get(lastView);			
+		}
+		return {
+			set: mySet,
+			get: myGet
+		}
+	}
+	
 	var load = function () {
 		var xml = getXml(); 
 		if (xml) {
@@ -81,12 +158,12 @@ cuicui.local = (function(){
 			});
 		}
 	}
-	
+
 	var store = function(xmlStr) {
 		Storage.set(key,xmlStr);
 		parsedXml = $($.parseXML(xmlStr));
 	}
-
+	
 	var getLatest = function() {
 		var xml = getXml();
 		return xml?$("feed entry:first published",getXml())[0].textContent:null;
@@ -96,6 +173,7 @@ cuicui.local = (function(){
 		load: load,
 		store: store,
 		getXml: getXml,
+		lastView: lastView,
 		getLatest: getLatest
 	}
 })();
@@ -124,21 +202,31 @@ cuicui.local = (function(){
 		});
 	    cuicui.autoupdate.timer = setInterval(function(){tick()},timerInterval*1000);
 	    tick();
-	    audioElement = document.createElement('audio');
-	    audioElement.setAttribute('src', 'http://portal-cuicui.appspot.com/public/sounds/to_take_the_bus.wav');
+	    
+	    audioElement = $("#audioOnNewCuicui")[0];
 	    audioElement.load();
-	    audioElement.volume=0.3;
+	    audioElement.volume=0.8;
 	}
 	
 	var tick = function() {
-		if (cuicui.feed_date == null ) {
+		if (cuicui.feed_date == null) {
 			var latest = cuicui.local.getLatest();
 			if (latest)
 				cuicui.feed_date = cuicui.tools.parseISO8601Date(latest);
 		}
-		last = cuicui.feed_date?cuicui.tools.deltaDateText(cuicui.feed_date):"not yet";
-		if (last == "0 secondes") last = "MAINTENANT";
+		if (cuicui.feed_date) {
+			var deltaSeconds = cuicui.tools.deltaSeconds(cuicui.feed_date);
+			if (deltaSeconds < 60) {
+				last = "< 60 seconds";
+			} else {
+				last = cuicui.tools.deltaDateText(cuicui.feed_date);
+			}
+			$(document).trigger("cuiTickLastUpdate",deltaSeconds);
+		} else {
+			last = "not yet";
+		}
 		$("#live-update-ago").text( last );
+		$(document).trigger("cuiTick");
 	}
 
 	var now = function() {
@@ -153,10 +241,29 @@ cuicui.local = (function(){
 	$(document).bind("newCui",function() {
 		now();
 		
+	    audioElement.currentTime=0;
 	    audioElement.play();
 	});
-
 	
+	(function(){
+		var firstTimeIveSeenThatWeNeedToRefresh = 0;
+		// Time since we received last pong
+		$(document).bind("cuiTickLastUpdate",function(e,deltaSeconds) {
+			// We didn't receive pongs for 10 minutes, let's recharge
+			if (deltaSeconds > 600) {
+				if (firstTimeIveSeenThatWeNeedToRefresh == 0) {
+					firstTimeIveSeenThatWeNeedToRefresh = new Date();
+					return;
+				}
+				
+				if (cuicui.tools.deltaSeconds(firstTimeIveSeenThatWeNeedToRefresh) > 60)
+					window.location.reload();
+			}
+	
+		});
+	})();
+		
+	cuicui.autoupdate.tick = tick;
 })();
 
 cuicui.tools = {
@@ -180,8 +287,13 @@ cuicui.tools = {
 				if (elements[i].tagName == searchTagName) return elements[i];
 			}
 		},
+		deltaSeconds: function(date) {
+			var delta = ( (new Date()).getTime() - date.getTime() ) / 1000;
+			delta = parseInt(delta);
+			return delta;
+		},
 		deltaDateText: function(date) {
-			var delta = ( (new Date()).getTime() - date.getTime() ) / 1000; delta = parseInt(delta);
+			var delta = cuicui.tools.deltaSeconds(date);
 			if (delta < 0) delta = 0;
 			if (delta < 60) text = delta + " secondes";
 			else if (delta < 3600) text = Math.ceil(delta / 60) + " minutes";

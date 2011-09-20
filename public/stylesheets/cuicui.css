@@ -6,6 +6,7 @@
 	margin-right:5px;
 	width:100% !important;
 	border-radius: 0 !important;
+	padding: 0 !imporant;
 }
 header{
 	width:100%;
@@ -29,4 +30,24 @@ header div {
 }
 header div.live-update {
 	margin-left: 20px;
+}
+
+/**
+ * Override default cuicui styles 
+ */
+.notice div.entry-content {
+	clear: none !important;
+	float: none !important;
+	margin-top: 10px;
+}
+
+#content .notice {
+	padding: 0px 0px 0px 15px !important;
+}
+
+#loading_pacman {
+	position: absolute;
+	display:none;
+	top: -10px;
+	right: 0px;
 }
